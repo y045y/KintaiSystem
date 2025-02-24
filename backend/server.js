@@ -325,7 +325,7 @@ app.post('/api/leave-request', authenticateToken, async (req, res) => {
       .input('leaveType', sql.NVarChar, leaveType)
       .input('reason', sql.NVarChar, reason)
       .input('status', sql.NVarChar, '申請中')
-      .input('approverEmail', sql.NVarChar, 'admin@company.com')  // 仮の承認者メール
+      .input('approverEmail', sql.NVarChar, 'admin@company.com') // 仮の承認者メール
       .query(`
         INSERT INTO LeaveRequests (userId, leaveDate, leaveType, reason, status, approverEmail, createdAt, updatedAt)
         VALUES (@userId, @leaveDate, @leaveType, @reason, @status, @approverEmail, GETDATE(), GETDATE())
@@ -357,6 +357,7 @@ app.get('/api/leave-requests', authenticateToken, async (req, res) => {
     res.status(500).json({ message: 'サーバーエラー' });
   }
 });
+
 app.patch('/api/leave-request/:id', authenticateToken, async (req, res) => {
   const { status } = req.body;  // "承認" または "却下"
   const requestId = req.params.id;
@@ -383,33 +384,13 @@ app.patch('/api/leave-request/:id', authenticateToken, async (req, res) => {
     res.status(500).json({ message: 'サーバーエラー' });
   }
 });
-app.get('/api/leave-requests', authenticateToken, async (req, res) => {
-  try {
-    const pool = await sql.connect(config);
-    const userId = req.user.id; // ログインユーザーのIDを取得
-
-    const result = await pool.request()
-      .input('userId', sql.Int, userId)
-      .query(`
-        SELECT id, leaveDate, leaveType, leaveReason, status, createdAt, updatedAt 
-        FROM LeaveRequests 
-        WHERE userId = @userId
-        ORDER BY leaveDate DESC
-      `);
-
-    res.status(200).json(result.recordset);
-  } catch (err) {
-    console.error('休暇申請取得エラー:', err);
-    res.status(500).json({ message: '休暇申請の取得に失敗しました' });
-  }
-});
 
 app.get('/api/admin/leave-requests', authenticateToken, async (req, res) => {
   try {
     const pool = await sql.connect(config);
 
     const result = await pool.request().query(`
-      SELECT lr.id, lr.leaveDate, lr.leaveType, lr.leaveReason, lr.status, 
+      SELECT lr.id, lr.leaveDate, lr.leaveType, lr.reason, lr.status, 
              lr.createdAt, lr.updatedAt, em.userName, em.email
       FROM LeaveRequests lr
       JOIN EmployeeMaster em ON lr.userId = em.id
@@ -449,6 +430,7 @@ app.put('/api/admin/leave-requests/:id', authenticateToken, async (req, res) => 
     res.status(500).json({ message: '休暇申請の更新に失敗しました' });
   }
 });
+
 
 // サーバーの起動
 app.listen(port, () => {
