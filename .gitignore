@@ -1,0 +1,7 @@
+echo "node_modules/" >> .gitignore
+echo "backend/.env" >> .gitignore
+echo "frontend/.env" >> .gitignore
+node_modules
+node_modules/
+backend/.env
+frontend/.env
